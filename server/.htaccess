@@ -1,0 +1,19 @@
+RewriteEngine On
+RewriteBase /
+
+# Clean URLs for ESP32 endpoints
+RewriteRule ^data/([a-zA-Z0-9_]+)/?$ api/data.php?device_id=$1 [L,QSA]
+RewriteRule ^config/([a-zA-Z0-9_]+)/?$ api/device-config.php?device_id=$1 [L,QSA]
+
+# Prevent direct access to config
+<Files "config.php">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</Files>
+
+<Files "db.php">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</Files>

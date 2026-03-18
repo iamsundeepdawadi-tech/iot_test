@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Farm — iot.aitalim.com</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Courier New',monospace;background:#fff;color:#000}
+        a{color:#000}
+
+        /* Nav */
+        nav{border-bottom:2px solid #000;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+        .brand{font-size:14px;font-weight:bold;text-transform:uppercase;letter-spacing:2px;text-decoration:none;cursor:pointer}
+        .nav-links{display:flex;gap:20px}
+        .nav-links a{font-size:11px;text-transform:uppercase;letter-spacing:1px;text-decoration:none;padding:4px 0;border-bottom:1px solid transparent;cursor:pointer}
+        .nav-links a:hover,.nav-links a.active{border-bottom:1px solid #000}
+
+        /* Layout */
+        .container{max-width:900px;margin:0 auto;padding:20px}
+        h1{font-size:16px;text-transform:uppercase;letter-spacing:2px;padding-bottom:8px;border-bottom:2px solid #000;margin-bottom:20px}
+
+        /* Section */
+        .section{border:1px solid #000;padding:16px;margin-bottom:16px}
+        .section-title{font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+
+        /* Forms */
+        label{font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;margin-top:12px}
+        label:first-child{margin-top:0}
+        input,select,textarea{width:100%;padding:8px;border:1px solid #000;font-family:'Courier New',monospace;font-size:12px;background:#fff}
+        input:focus,select:focus{outline:2px solid #000;outline-offset:-2px}
+
+        /* Buttons */
+        button,.btn{padding:8px 16px;border:1px solid #000;background:#fff;color:#000;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+        button:hover,.btn:hover{background:#000;color:#fff}
+        button.active{background:#000;color:#fff}
+        button:disabled{opacity:.3;cursor:not-allowed}
+        .btn-group{display:flex;gap:8px}
+        .btn-group button{flex:1}
+
+        /* Status */
+        .status-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #eee}
+        .status-row:last-child{border-bottom:none}
+        .status-label{font-weight:bold}
+        .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+        .dot.on{background:#000}.dot.off{background:#ccc}
+
+        /* Reading cards */
+        .reading-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+        .reading-box{border:1px solid #000;padding:16px;text-align:center}
+        .reading-value{font-size:32px;font-weight:bold;line-height:1}
+        .reading-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-top:6px}
+        .reading-unit{font-size:12px;font-weight:normal}
+
+        /* Control */
+        .control-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .control-box{border:1px solid #000;padding:12px}
+        .control-name{font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+        .control-status{font-size:12px;margin-bottom:10px}
+
+        /* Table */
+        table{width:100%;border-collapse:collapse;font-size:11px}
+        th,td{border:1px solid #000;padding:6px 8px;text-align:left}
+        th{font-weight:bold;text-transform:uppercase;letter-spacing:1px;font-size:10px;background:#f8f8f8}
+
+        /* Device cards */
+        .device-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+        .device-card{border:1px solid #000;padding:16px;cursor:pointer}
+        .device-card:hover{background:#f5f5f5}
+        .device-card .d-name{font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:1px}
+        .device-card .d-meta{font-size:10px;margin-top:4px;color:#555}
+        .device-card .d-type{font-size:10px;margin-top:4px;border:1px solid #000;display:inline-block;padding:2px 6px}
+
+        /* Code */
+        .code-block{background:#f8f8f8;border:1px solid #000;padding:12px;font-size:11px;overflow-x:auto;white-space:pre;max-height:400px;overflow-y:auto;line-height:1.5}
+        .code-actions{display:flex;gap:8px;margin-top:8px}
+
+        /* Tabs */
+        .tabs{display:flex;border-bottom:1px solid #000;margin-bottom:16px;flex-wrap:wrap}
+        .tab{padding:8px 16px;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;cursor:pointer;border:1px solid transparent;border-bottom:none;margin-bottom:-1px;font-family:'Courier New',monospace;background:none}
+        .tab.active{border:1px solid #000;border-bottom:1px solid #fff;background:#fff}
+        .tab-panel{display:none}.tab-panel.active{display:block}
+
+        /* Modal */
+        .modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100}
+        .modal-bg.show{display:flex;align-items:center;justify-content:center}
+        .modal{background:#fff;border:2px solid #000;padding:24px;max-width:750px;width:90%;max-height:85vh;overflow-y:auto}
+        .modal-title{font-size:14px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #000}
+        .modal-close{float:right;cursor:pointer;font-size:18px;font-weight:bold;border:none;background:none;font-family:'Courier New',monospace}
+
+        /* Note */
+        .note{border:1px solid #000;padding:10px 12px;font-size:11px;margin:12px 0;background:#f8f8f8}
+        .note strong{text-transform:uppercase;letter-spacing:1px}
+
+        /* Pages */
+        .page{display:none}.page.active{display:block}
+
+        /* Login */
+        .login-wrap{display:flex;align-items:center;justify-content:center;min-height:80vh}
+        .login-box{border:2px solid #000;padding:32px;width:320px}
+        .login-box h1{text-align:center}
+
+        /* Error */
+        .error-msg{font-size:11px;color:#900;padding:8px;border:1px solid #900;margin-top:8px;display:none}
+
+        /* Slider */
+        input[type=range]{-webkit-appearance:none;height:4px;background:#000;border:none;padding:0}
+        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:#000;border-radius:50%;cursor:pointer}
+
+        /* Refresh note */
+        .refresh-note{font-size:10px;color:#888;text-align:right;margin-top:4px}
+
+        footer{border-top:1px solid #000;padding:12px 20px;font-size:10px;text-align:center;color:#888;margin-top:40px}
+    </style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="page active" id="page-login">
+    <div class="login-wrap">
+        <div class="login-box">
+            <h1>IoT Farm</h1>
+            <label>Username</label>
+            <input type="text" id="login-user" value="admin" />
+            <label>Password</label>
+            <input type="password" id="login-pass" />
+            <div class="error-msg" id="login-error"></div>
+            <div style="margin-top:16px">
+                <button onclick="doLogin()" style="width:100%">Login</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div class="page" id="page-app">
+<nav>
+    <span class="brand" onclick="showSection('dashboard')">IoT Farm</span>
+    <div class="nav-links">
+        <a class="active" data-nav="dashboard" onclick="showSection('dashboard')">Dashboard</a>
+        <a data-nav="devices" onclick="showSection('devices')">Devices</a>
+        <a data-nav="docs" onclick="showSection('docs')">Docs</a>
+    </div>
+</nav>
+
+<!-- ──── SECTION: DASHBOARD ──── -->
+<div class="section-page active" id="sec-dashboard">
+<div class="container">
+    <h1>Dashboard</h1>
+
+    <div class="section">
+        <div class="section-title">Active Device</div>
+        <div style="display:flex;gap:12px;align-items:center">
+            <select id="device-select" onchange="switchDevice()" style="flex:1"><option value="">— Select —</option></select>
+            <button onclick="showSection('devices')">+ Add</button>
+        </div>
+    </div>
+
+    <div id="dash-empty" class="section" style="text-align:center;padding:40px">
+        <p style="font-size:12px;margin-bottom:16px">No device selected. Add or select a device.</p>
+        <button onclick="showSection('devices')">+ Add Device</button>
+    </div>
+
+    <div id="dash-content" style="display:none">
+        <!-- Status -->
+        <div class="section">
+            <div class="section-title">Device Status</div>
+            <div class="status-row"><span class="status-label">Device</span><span id="s-device">—</span></div>
+            <div class="status-row"><span class="status-label">Type</span><span id="s-type">—</span></div>
+            <div class="status-row"><span class="status-label">Status</span><span id="s-online"><span class="dot off"></span>Offline</span></div>
+            <div class="status-row"><span class="status-label">Last Seen</span><span id="s-lastseen">—</span></div>
+            <div class="status-row"><span class="status-label">IP</span><span id="s-ip">—</span></div>
+        </div>
+
+        <!-- Dynamic sensor readings -->
+        <div class="section">
+            <div class="section-title">Live Readings</div>
+            <div class="reading-grid" id="readings-grid"></div>
+            <div class="refresh-note">Auto-refresh every 5s</div>
+        </div>
+
+        <!-- Dynamic controls -->
+        <div class="section" id="controls-section" style="display:none">
+            <div class="section-title">Controls</div>
+            <div id="controls-container"></div>
+        </div>
+
+        <!-- History table -->
+        <div class="section">
+            <div class="section-title">Recent Data</div>
+            <div style="overflow-x:auto">
+                <table id="history-table"><thead><tr id="history-head"></tr></thead><tbody id="history-body"></tbody></table>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- ──── SECTION: DEVICES ──── -->
+<div class="section-page" id="sec-devices">
+<div class="container">
+    <h1>Devices</h1>
+    <div class="tabs">
+        <button class="tab active" data-tab="t-list" onclick="switchTab(this,'t-list')">My Devices</button>
+        <button class="tab" data-tab="t-add" onclick="switchTab(this,'t-add')">+ Add New</button>
+    </div>
+
+    <div class="tab-panel active" id="t-list">
+        <div id="devices-container"><p style="font-size:12px;color:#888">Loading...</p></div>
+    </div>
+
+    <div class="tab-panel" id="t-add">
+        <div class="section">
+            <div class="section-title">Register New Device</div>
+
+            <label>Device Type</label>
+            <select id="f-type" onchange="onTypeChange()">
+                <option value="random_test">Random Test (Demo)</option>
+                <option value="chicken_coop">Chicken Coop</option>
+                <option value="soil_sensor">Soil Sensor</option>
+                <option value="ldr_sensor">LDR Sensor</option>
+            </select>
+
+            <label>Device ID</label>
+            <input type="text" id="f-id" placeholder="e.g. my_device_01" />
+
+            <label>Device Name</label>
+            <input type="text" id="f-name" placeholder="e.g. Barn A Sensor" />
+
+            <label>Location</label>
+            <input type="text" id="f-location" placeholder="e.g. Barn A" />
+
+            <div class="note" id="type-desc"></div>
+
+            <div class="error-msg" id="add-error"></div>
+            <div style="margin-top:16px">
+                <button onclick="addDevice()">Register Device</button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- ──── SECTION: DOCS ──── -->
+<div class="section-page" id="sec-docs">
+<div class="container">
+    <h1>Documentation</h1>
+    <div class="tabs">
+        <button class="tab active" data-tab="d-start" onclick="switchTab(this,'d-start')">Quick Start</button>
+        <button class="tab" data-tab="d-api" onclick="switchTab(this,'d-api')">API</button>
+        <button class="tab" data-tab="d-hw" onclick="switchTab(this,'d-hw')">Hardware</button>
+        <button class="tab" data-tab="d-deploy" onclick="switchTab(this,'d-deploy')">Deploy</button>
+    </div>
+
+    <div class="tab-panel active" id="d-start">
+        <div class="section">
+            <div class="section-title">1. Import Database</div>
+            <div class="code-block">## cPanel → phpMyAdmin → Import → schema.sql
+## Or via SSH:
+mysql -u aitalimc_admin -p aitalimc_iot < schema.sql</div>
+        </div>
+        <div class="section">
+            <div class="section-title">2. Add a Device</div>
+            <p style="font-size:12px;line-height:1.6">Go to <strong>Devices → + Add New</strong>. Pick a device type, fill details, click Register. Then click <strong>View Code</strong> on the device card to get Arduino IDE code.</p>
+        </div>
+        <div class="section">
+            <div class="section-title">3. Arduino IDE Setup</div>
+            <div class="code-block">Board URL (Settings → Additional Boards):
+https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+
+Install Libraries (Tools → Manage Libraries):
+  - "DHT sensor library" by Adafruit
+  - "ArduinoJson" by Benoit Blanchon
+
+Board: "ESP32 Dev Module"
+Upload Speed: 115200</div>
+        </div>
+        <div class="section">
+            <div class="section-title">4. Flash & Test</div>
+            <p style="font-size:12px;line-height:1.6">Paste generated code into Arduino IDE → Upload. Open Serial Monitor (115200 baud). ESP32 will connect to WiFi and start sending data. Dashboard shows data within seconds.</p>
+        </div>
+    </div>
+
+    <div class="tab-panel" id="d-api">
+        <div class="section">
+            <div class="section-title">Endpoints</div>
+            <table>
+                <thead><tr><th>Method</th><th>URL</th><th>Purpose</th></tr></thead>
+                <tbody>
+                    <tr><td>POST</td><td>/data/{device_id}</td><td>ESP32 sends JSON sensor data</td></tr>
+                    <tr><td>GET</td><td>/data/{device_id}?limit=N</td><td>Fetch recent data</td></tr>
+                    <tr><td>GET</td><td>/config/{device_id}</td><td>ESP32 reads control config</td></tr>
+                    <tr><td>POST</td><td>/config/{device_id}</td><td>Dashboard updates config</td></tr>
+                    <tr><td>GET</td><td>/api/devices.php</td><td>List all devices</td></tr>
+                    <tr><td>POST</td><td>/api/devices.php</td><td>Register new device</td></tr>
+                    <tr><td>POST</td><td>/api/login.php</td><td>Dashboard login</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="section">
+            <div class="section-title">POST /data/{device_id} — Body</div>
+            <div class="code-block">// chicken_coop:
+{"temp_c": 28.5, "humidity": 65}
+
+// soil_sensor:
+{"moisture":45,"ph":6.5,"nitrogen":20,"phosphorus":15,"potassium":30,"temp_c":22,"conductivity":1.2}
+
+// ldr_sensor:
+{"light_level": 850}
+
+// random_test:
+{"value": 42}</div>
+        </div>
+        <div class="section">
+            <div class="section-title">POST /config/{device_id} — Body</div>
+            <div class="code-block">// chicken_coop:
+{"light": "on", "heater": "off", "desired_temp": 30}
+
+// random_test:
+{"led": "on"}</div>
+        </div>
+    </div>
+
+    <div class="tab-panel" id="d-hw">
+        <div class="section">
+            <div class="section-title">TTGO T-Call ESP32 SIM800L — Reserved Pins</div>
+            <table>
+                <thead><tr><th>GPIO</th><th>Used By</th><th>Available?</th></tr></thead>
+                <tbody>
+                    <tr><td>26</td><td>SIM800L MODEM_RST</td><td>NO</td></tr>
+                    <tr><td>27</td><td>SIM800L MODEM_PWRKEY</td><td>NO</td></tr>
+                    <tr><td>5</td><td>SIM800L MODEM_POWER_ON</td><td>NO</td></tr>
+                    <tr><td>23</td><td>SIM800L TX</td><td>NO</td></tr>
+                    <tr><td>25</td><td>Available</td><td>YES — DHT22</td></tr>
+                    <tr><td>13</td><td>Available</td><td>YES — Relay</td></tr>
+                    <tr><td>14</td><td>Available</td><td>YES — Relay</td></tr>
+                    <tr><td>2</td><td>Built-in LED</td><td>YES — LED</td></tr>
+                    <tr><td>32, 33</td><td>Available</td><td>YES — ADC</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="section">
+            <div class="section-title">ISR Best Practices</div>
+            <p style="font-size:12px;line-height:1.8">
+                • Use <strong>ARDUINO_ISR_ATTR</strong> for ISRs to run from IRAM<br>
+                • Mark shared vars as <strong>volatile</strong><br>
+                • Use <strong>millis()</strong> not delay() for non-blocking timing<br>
+                • Keep ISRs short — set flags only, handle in loop()
+            </p>
+        </div>
+        <div class="section">
+            <div class="section-title">Wiring — Chicken Coop</div>
+            <div class="code-block">ESP32          DHT22          2-Ch Relay
+─────          ─────          ──────────
+3.3V  ───────→ VCC
+GND   ───────→ GND
+GPIO 25 ─────→ DATA           (10kΩ pull-up)
+GPIO 13 ─────────────────────→ IN1 (Light)
+GPIO 14 ─────────────────────→ IN2 (Heater)
+GND   ───────────────────────→ GND
+                               VCC → 5V USB</div>
+        </div>
+    </div>
+
+    <div class="tab-panel" id="d-deploy">
+        <div class="section">
+            <div class="section-title">GitHub Actions → cPanel FTP</div>
+            <div class="code-block">1. GitHub repo → Settings → Secrets → Actions
+   Add secrets:
+     FTP_SERVER   → aitalim.com
+     FTP_USERNAME → admin@aitalim.com
+     FTP_PASSWORD → (your FTP password)
+
+2. Push to main branch → auto-deploys server/ to cPanel
+
+3. Import schema.sql via phpMyAdmin
+
+4. Dashboard: https://iot.aitalim.com</div>
+        </div>
+        <div class="section">
+            <div class="section-title">Manual Upload</div>
+            <div class="code-block">1. cPanel → File Manager → home/iot.aitalim.com/
+2. Upload all files from server/
+3. Ensure api/ folder is inside
+4. phpMyAdmin → Import schema.sql
+5. Verify: https://iot.aitalim.com</div>
+        </div>
+    </div>
+</div>
+</div>
+
+</div><!-- /page-app -->
+
+<!-- ══════ CODE MODAL ══════ -->
+<div class="modal-bg" id="code-modal">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <div class="modal-title" id="modal-title">Arduino Code</div>
+        <div class="note"><strong>Instructions:</strong> Copy → Arduino IDE → Paste → Select board → Upload</div>
+        <div class="code-block" id="modal-code" style="max-height:500px"></div>
+        <div class="code-actions">
+            <button onclick="copyCode()">Copy Code</button>
+            <button onclick="downloadCode()">Download .ino</button>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<footer>IoT Farm — iot.aitalim.com</footer>
+
+<script>
+// ================================================================
+// DEVICE TYPE DEFINITIONS (modular — add new types here)
+// ================================================================
+const TYPES = {
+    random_test: {
+        label: 'Random Test (Demo)',
+        desc: 'Sends a random number every second. LED on/off control. Perfect for testing without sensors.',
+        sensors: { value: { label: 'Value', unit: '' } },
+        controls: [{ key: 'led', label: 'Built-in LED', type: 'toggle' }],
+        configDefaults: { led: 'off' }
+    },
+    chicken_coop: {
+        label: 'Chicken Coop',
+        desc: 'DHT22 temperature + humidity sensor. Light and heater relay control with desired temperature calibration.',
+        sensors: { temp_c: { label: 'Temperature', unit: '°C' }, humidity: { label: 'Humidity', unit: '%' } },
+        controls: [
+            { key: 'light', label: 'Light', type: 'toggle' },
+            { key: 'heater', label: 'Heater', type: 'toggle' },
+            { key: 'desired_temp', label: 'Desired Temp (°C)', type: 'range', min: 15, max: 40, step: 1 }
+        ],
+        configDefaults: { light: 'off', heater: 'off', desired_temp: 28 }
+    },
+    soil_sensor: {
+        label: 'Soil Sensor',
+        desc: '7-parameter soil analysis: moisture, pH, nitrogen, phosphorus, potassium, temperature, conductivity.',
+        sensors: {
+            moisture: { label: 'Moisture', unit: '%' },
+            ph: { label: 'pH', unit: '' },
+            nitrogen: { label: 'Nitrogen', unit: 'mg/kg' },
+            phosphorus: { label: 'Phosphorus', unit: 'mg/kg' },
+            potassium: { label: 'Potassium', unit: 'mg/kg' },
+            temp_c: { label: 'Soil Temp', unit: '°C' },
+            conductivity: { label: 'Conductivity', unit: 'dS/m' }
+        },
+        controls: [],
+        configDefaults: {}
+    },
+    ldr_sensor: {
+        label: 'LDR Sensor',
+        desc: 'Light-dependent resistor reads ambient light level (analog).',
+        sensors: { light_level: { label: 'Light Level', unit: '' } },
+        controls: [],
+        configDefaults: {}
+    }
+};
+
+// ================================================================
+// STATE
+// ================================================================
+const API = '';
+let currentDevice = null;
+let devices = [];
+let pollTimer = null;
+
+// ================================================================
+// AUTH
+// ================================================================
+function doLogin() {
+    const user = document.getElementById('login-user').value;
+    const pass = document.getElementById('login-pass').value;
+    const errEl = document.getElementById('login-error');
+    errEl.style.display = 'none';
+
+    fetch(API + '/api/login.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.status === 'ok') {
+            document.getElementById('page-login').classList.remove('active');
+            document.getElementById('page-app').classList.add('active');
+            loadDevices();
+        } else {
+            errEl.textContent = d.error || 'Login failed';
+            errEl.style.display = 'block';
+        }
+    })
+    .catch(() => { errEl.textContent = 'Connection error'; errEl.style.display = 'block'; });
+}
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+function showSection(name) {
+    document.querySelectorAll('.section-page').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    document.getElementById('sec-' + name).classList.add('active');
+    document.querySelector('[data-nav="' + name + '"]').classList.add('active');
+    if (name === 'devices') renderDevices();
+    if (name === 'dashboard') refreshSelect();
+}
+
+function switchTab(btn, tabId) {
+    const parent = btn.closest('.container');
+    parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    parent.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+}
+
+// ================================================================
+// DEVICES CRUD
+// ================================================================
+function loadDevices() {
+    fetch(API + '/api/devices.php')
+        .then(r => r.json())
+        .then(d => { if (Array.isArray(d)) { devices = d; refreshSelect(); renderDevices(); } })
+        .catch(() => {});
+}
+
+function refreshSelect() {
+    const sel = document.getElementById('device-select');
+    sel.innerHTML = '<option value="">— Select —</option>';
+    devices.forEach(d => {
+        const t = TYPES[d.device_type];
+        sel.innerHTML += '<option value="' + d.device_id + '"' +
+            (currentDevice && currentDevice.device_id === d.device_id ? ' selected' : '') +
+            '>' + d.name + ' [' + (t ? t.label : d.device_type) + ']</option>';
+    });
+    updateDashVis();
+}
+
+function switchDevice() {
+    const id = document.getElementById('device-select').value;
+    currentDevice = devices.find(d => d.device_id === id) || null;
+    updateDashVis();
+    if (currentDevice) { renderDashboard(); pollAll(); }
+}
+
+function updateDashVis() {
+    document.getElementById('dash-content').style.display = currentDevice ? 'block' : 'none';
+    document.getElementById('dash-empty').style.display = currentDevice ? 'none' : 'block';
+}
+
+function renderDevices() {
+    const c = document.getElementById('devices-container');
+    if (devices.length === 0) { c.innerHTML = '<p style="font-size:12px;color:#888">No devices yet. Click "+ Add New" to register one.</p>'; return; }
+    let h = '<div class="device-list">';
+    devices.forEach(d => {
+        const t = TYPES[d.device_type];
+        h += '<div class="device-card">' +
+            '<div class="d-name">' + esc(d.name) + '</div>' +
+            '<div class="d-meta">' + esc(d.device_id) + ' — ' + esc(d.location || 'No location') + '</div>' +
+            '<div class="d-type">' + esc(t ? t.label : d.device_type) + '</div>' +
+            '<div style="margin-top:10px;display:flex;gap:6px">' +
+            '<button style="font-size:10px;padding:4px 8px" onclick="viewOnDash(\'' + d.device_id + '\')">Dashboard</button>' +
+            '<button style="font-size:10px;padding:4px 8px" onclick="showCode(\'' + d.device_id + '\')">View Code</button>' +
+            '</div></div>';
+    });
+    h += '</div>';
+    c.innerHTML = h;
+}
+
+function viewOnDash(id) {
+    currentDevice = devices.find(d => d.device_id === id);
+    showSection('dashboard');
+    document.getElementById('device-select').value = id;
+    renderDashboard();
+    pollAll();
+}
+
+function addDevice() {
+    const errEl = document.getElementById('add-error');
+    errEl.style.display = 'none';
+    const body = {
+        device_id: document.getElementById('f-id').value.trim(),
+        device_type: document.getElementById('f-type').value,
+        name: document.getElementById('f-name').value.trim(),
+        location: document.getElementById('f-location').value.trim()
+    };
+    if (!body.device_id || !body.name) { errEl.textContent = 'Device ID and Name are required'; errEl.style.display = 'block'; return; }
+
+    fetch(API + '/api/devices.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.status === 'ok') {
+            document.getElementById('f-id').value = '';
+            document.getElementById('f-name').value = '';
+            document.getElementById('f-location').value = '';
+            loadDevices();
+            alert('Device registered! Click "View Code" on the device card to get Arduino code.');
+        } else {
+            errEl.textContent = d.error || 'Failed';
+            errEl.style.display = 'block';
+        }
+    })
+    .catch(() => { errEl.textContent = 'Connection error'; errEl.style.display = 'block'; });
+}
+
+function onTypeChange() {
+    const t = TYPES[document.getElementById('f-type').value];
+    document.getElementById('type-desc').innerHTML = t ? '<strong>' + t.label + ':</strong> ' + t.desc : '';
+}
+onTypeChange();
+
+// ================================================================
+// DYNAMIC DASHBOARD RENDERING (reactive to device_type)
+// ================================================================
+function renderDashboard() {
+    if (!currentDevice) return;
+    const type = TYPES[currentDevice.device_type] || { sensors: {}, controls: [] };
+
+    // Sensor reading cards
+    const grid = document.getElementById('readings-grid');
+    grid.innerHTML = '';
+    for (const [key, meta] of Object.entries(type.sensors)) {
+        grid.innerHTML += '<div class="reading-box"><div class="reading-value" id="rv-' + key + '">—</div>' +
+            '<div class="reading-label">' + meta.label + (meta.unit ? ' <span class="reading-unit">' + meta.unit + '</span>' : '') + '</div></div>';
+    }
+
+    // Controls
+    const ctrlSection = document.getElementById('controls-section');
+    const ctrlContainer = document.getElementById('controls-container');
+    if (type.controls.length === 0) {
+        ctrlSection.style.display = 'none';
+    } else {
+        ctrlSection.style.display = 'block';
+        let ch = '<div class="control-grid">';
+        type.controls.forEach(c => {
+            if (c.type === 'toggle') {
+                ch += '<div class="control-box"><div class="control-name">' + c.label + '</div>' +
+                    '<div class="control-status">Status: <strong id="cs-' + c.key + '">—</strong></div>' +
+                    '<div class="btn-group">' +
+                    '<button id="cb-' + c.key + '-on" onclick="setConfig(\'' + c.key + '\',\'on\')">On</button>' +
+                    '<button id="cb-' + c.key + '-off" onclick="setConfig(\'' + c.key + '\',\'off\')">Off</button>' +
+                    '</div></div>';
+            } else if (c.type === 'range') {
+                ch += '<div class="control-box"><div class="control-name">' + c.label + '</div>' +
+                    '<div class="control-status">Value: <strong id="cs-' + c.key + '">' + (c.min || 0) + '</strong></div>' +
+                    '<input type="range" min="' + (c.min||0) + '" max="' + (c.max||100) + '" step="' + (c.step||1) + '" ' +
+                    'id="cr-' + c.key + '" oninput="document.getElementById(\'cs-' + c.key + '\').textContent=this.value" ' +
+                    'onchange="setConfig(\'' + c.key + '\',parseInt(this.value))" /></div>';
+            }
+        });
+        ch += '</div>';
+        ctrlContainer.innerHTML = ch;
+    }
+
+    // History table header
+    const head = document.getElementById('history-head');
+    head.innerHTML = '<th>Time</th>';
+    for (const [key, meta] of Object.entries(type.sensors)) {
+        head.innerHTML += '<th>' + meta.label + '</th>';
+    }
+}
+
+// ================================================================
+// DATA FETCHING
+// ================================================================
+function pollAll() {
+    if (!currentDevice) return;
+    fetchData();
+    fetchStatus();
+    fetchConfig();
+}
+
+function fetchData() {
+    if (!currentDevice) return;
+    const type = TYPES[currentDevice.device_type];
+    if (!type) return;
+
+    fetch(API + '/data/' + currentDevice.device_id + '?limit=15')
+        .then(r => { if (!r.ok) throw r; return r.json(); })
+        .then(rows => {
+            if (!Array.isArray(rows) || rows.length === 0) return;
+
+            // Update live reading cards
+            const latest = rows[0].data || {};
+            for (const key of Object.keys(type.sensors)) {
+                const el = document.getElementById('rv-' + key);
+                if (el) el.textContent = latest[key] !== undefined ? latest[key] : '—';
+            }
+
+            // Update history table
+            const tbody = document.getElementById('history-body');
+            tbody.innerHTML = '';
+            rows.forEach(row => {
+                const d = row.data || {};
+                let tr = '<tr><td>' + fmtTime(row.recorded_at) + '</td>';
+                for (const key of Object.keys(type.sensors)) {
+                    tr += '<td>' + (d[key] !== undefined ? d[key] : '—') + '</td>';
+                }
+                tr += '</tr>';
+                tbody.innerHTML += tr;
+            });
+        })
+        .catch(() => {});
+}
+
+function fetchStatus() {
+    if (!currentDevice) return;
+    fetch(API + '/api/devices.php?device_id=' + currentDevice.device_id)
+        .then(r => r.json())
+        .then(arr => {
+            if (!Array.isArray(arr) || arr.length === 0) return;
+            const d = arr[0];
+            document.getElementById('s-device').textContent = d.device_id;
+            document.getElementById('s-type').textContent = (TYPES[d.device_type] || {}).label || d.device_type;
+            document.getElementById('s-ip').textContent = d.ip_address || '—';
+            document.getElementById('s-lastseen').textContent = fmtTime(d.last_seen);
+            const online = d.last_seen && (Date.now() - new Date(d.last_seen).getTime()) < 30000;
+            document.getElementById('s-online').innerHTML = '<span class="dot ' + (online ? 'on' : 'off') + '"></span>' + (online ? 'Online' : 'Offline');
+        })
+        .catch(() => {});
+}
+
+function fetchConfig() {
+    if (!currentDevice) return;
+    const type = TYPES[currentDevice.device_type];
+    if (!type || type.controls.length === 0) return;
+
+    fetch(API + '/config/' + currentDevice.device_id)
+        .then(r => r.json())
+        .then(cfg => {
+            type.controls.forEach(c => {
+                const val = cfg[c.key];
+                if (c.type === 'toggle') {
+                    const el = document.getElementById('cs-' + c.key);
+                    if (el) el.textContent = val ? String(val).toUpperCase() : '—';
+                    const onBtn = document.getElementById('cb-' + c.key + '-on');
+                    const offBtn = document.getElementById('cb-' + c.key + '-off');
+                    if (onBtn) onBtn.classList.toggle('active', val === 'on');
+                    if (offBtn) offBtn.classList.toggle('active', val === 'off');
+                } else if (c.type === 'range') {
+                    const el = document.getElementById('cs-' + c.key);
+                    const slider = document.getElementById('cr-' + c.key);
+                    if (el && val !== undefined) el.textContent = val;
+                    if (slider && val !== undefined) slider.value = val;
+                }
+            });
+        })
+        .catch(() => {});
+}
+
+function setConfig(key, value) {
+    if (!currentDevice) return;
+    const body = {};
+    body[key] = value;
+    fetch(API + '/config/' + currentDevice.device_id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    })
+    .then(r => r.json())
+    .then(() => fetchConfig())
+    .catch(() => {});
+}
+
+// ================================================================
+// CODE GENERATOR
+// ================================================================
+function showCode(deviceId) {
+    const d = devices.find(x => x.device_id === deviceId);
+    if (!d) return;
+    const code = generateCode(d);
+    document.getElementById('modal-title').textContent = 'Arduino Code — ' + d.name;
+    document.getElementById('modal-code').textContent = code;
+    document.getElementById('code-modal').classList.add('show');
+}
+
+function generateCode(d) {
+    const gen = CODE_GENERATORS[d.device_type];
+    if (gen) return gen(d);
+    return '// No code template for device type: ' + d.device_type;
+}
+
+// ── Code templates per device type ──
+const WIFI_SSID = 'accounthack_fbnpa_5';
+const WIFI_PASS = 'CLED02502F';
+const SERVER = 'http://iot.aitalim.com';
+
+const CODE_GENERATORS = {
+
+// ──────────────── RANDOM TEST ────────────────
+random_test: (d) => `// ============================================================
+// ${d.name} — Random Test Device
+// Board: ESP32 Dev Module (TTGO T-Call compatible)
+// ============================================================
+// Sends a random number every second to the server.
+// Reads config to control built-in LED.
+// ============================================================
+
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+#define WIFI_SSID       "${WIFI_SSID}"
+#define WIFI_PASSWORD   "${WIFI_PASS}"
+#define SERVER_URL      "${SERVER}"
+#define DEVICE_ID       "${d.device_id}"
+
+#define LED_PIN         2       // Built-in LED
+#define SEND_INTERVAL   1000    // 1 second
+#define CONFIG_INTERVAL 3000    // Poll config every 3s
+#define HTTP_TIMEOUT    5000
+
+unsigned long lastSend = 0;
+unsigned long lastConfig = 0;
+
+void setup() {
+    Serial.begin(115200);
+    delay(1000);
+    Serial.println("\\n=== ${d.name} starting... ===");
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
+    connectWiFi();
+}
+
+void loop() {
+    if (WiFi.status() != WL_CONNECTED) connectWiFi();
+    unsigned long now = millis();
+
+    if (now - lastSend >= SEND_INTERVAL) {
+        lastSend = now;
+        sendData();
+    }
+    if (now - lastConfig >= CONFIG_INTERVAL) {
+        lastConfig = now;
+        readConfig();
+    }
+    delay(50);
+}
+
+void connectWiFi() {
+    Serial.printf("[WiFi] Connecting to %s", WIFI_SSID);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    int tries = 0;
+    while (WiFi.status() != WL_CONNECTED && tries < 20) { delay(500); Serial.print("."); tries++; }
+    if (WiFi.status() == WL_CONNECTED) Serial.printf("\\n[WiFi] OK IP: %s\\n", WiFi.localIP().toString().c_str());
+    else Serial.println("\\n[WiFi] FAIL");
+}
+
+void sendData() {
+    int val = random(0, 1001);
+    Serial.printf("[Data] Sending value: %d\\n", val);
+
+    JsonDocument doc;
+    doc["value"] = val;
+    String payload;
+    serializeJson(doc, payload);
+
+    HTTPClient http;
+    http.begin(String(SERVER_URL) + "/data/" + DEVICE_ID);
+    http.setTimeout(HTTP_TIMEOUT);
+    http.addHeader("Content-Type", "application/json");
+    int code = http.POST(payload);
+    Serial.printf("[HTTP] POST: %d\\n", code);
+    http.end();
+}
+
+void readConfig() {
+    HTTPClient http;
+    http.begin(String(SERVER_URL) + "/config/" + DEVICE_ID);
+    http.setTimeout(HTTP_TIMEOUT);
+    int code = http.GET();
+    if (code != 200) { http.end(); return; }
+
+    String body = http.getString();
+    http.end();
+
+    JsonDocument doc;
+    if (deserializeJson(doc, body)) return;
+
+    const char* led = doc["led"] | "off";
+    digitalWrite(LED_PIN, strcmp(led, "on") == 0 ? HIGH : LOW);
+    Serial.printf("[Config] LED: %s\\n", led);
+}`,
+
+// ──────────────── CHICKEN COOP ────────────────
+chicken_coop: (d) => `// ============================================================
+// ${d.name} — Chicken Coop Controller
+// Board: ESP32 Dev Module (TTGO T-Call compatible)
+// ============================================================
+// DHT22 temperature + humidity sensor
+// 2x relay: light (GPIO 13), heater (GPIO 14)
+// Auto-heater: turns ON if temp < desired_temp, OFF if above
+// ============================================================
+
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include <DHT.h>
+
+#define WIFI_SSID       "${WIFI_SSID}"
+#define WIFI_PASSWORD   "${WIFI_PASS}"
+#define SERVER_URL      "${SERVER}"
+#define DEVICE_ID       "${d.device_id}"
+
+// Pins (TTGO T-Call safe)
+#define DHT_PIN         25
+#define DHT_TYPE        DHT22
+#define RELAY_LIGHT     13
+#define RELAY_HEATER    14
+
+#define SEND_INTERVAL   10000   // 10s
+#define CONFIG_INTERVAL 5000    // 5s
+#define HTTP_TIMEOUT    5000
+
+DHT dht(DHT_PIN, DHT_TYPE);
+unsigned long lastSend = 0;
+unsigned long lastConfig = 0;
+
+// Current config state
+String cfgLight = "off";
+String cfgHeater = "off";
+float cfgDesiredTemp = 28.0;
+
+void setup() {
+    Serial.begin(115200);
+    delay(1000);
+    Serial.println("\\n=== ${d.name} starting... ===");
+
+    pinMode(RELAY_LIGHT, OUTPUT);
+    pinMode(RELAY_HEATER, OUTPUT);
+    digitalWrite(RELAY_LIGHT, LOW);
+    digitalWrite(RELAY_HEATER, LOW);
+
+    dht.begin();
+    connectWiFi();
+}
+
+void loop() {
+    if (WiFi.status() != WL_CONNECTED) connectWiFi();
+    unsigned long now = millis();
+
+    if (now - lastSend >= SEND_INTERVAL) {
+        lastSend = now;
+        sendData();
+    }
+    if (now - lastConfig >= CONFIG_INTERVAL) {
+        lastConfig = now;
+        readConfig();
+    }
+    delay(100);
+}
+
+void connectWiFi() {
+    Serial.printf("[WiFi] Connecting to %s", WIFI_SSID);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    int tries = 0;
+    while (WiFi.status() != WL_CONNECTED && tries < 20) { delay(500); Serial.print("."); tries++; }
+    if (WiFi.status() == WL_CONNECTED) Serial.printf("\\n[WiFi] OK IP: %s\\n", WiFi.localIP().toString().c_str());
+    else Serial.println("\\n[WiFi] FAIL");
+}
+
+void sendData() {
+    float temp = dht.readTemperature();
+    float hum = dht.readHumidity();
+    if (isnan(temp) || isnan(hum)) { Serial.println("[DHT] Read failed!"); return; }
+
+    Serial.printf("[Data] Temp: %.1f°C  Hum: %.1f%%\\n", temp, hum);
+
+    // Auto-heater calibration
+    if (temp < cfgDesiredTemp) {
+        digitalWrite(RELAY_HEATER, HIGH);
+        Serial.println("[Auto] Heater ON (below desired temp)");
+    } else if (temp >= cfgDesiredTemp + 1.0) {
+        digitalWrite(RELAY_HEATER, LOW);
+        Serial.println("[Auto] Heater OFF (above desired temp)");
+    }
+
+    JsonDocument doc;
+    doc["temp_c"] = temp;
+    doc["humidity"] = hum;
+    String payload;
+    serializeJson(doc, payload);
+
+    HTTPClient http;
+    http.begin(String(SERVER_URL) + "/data/" + DEVICE_ID);
+    http.setTimeout(HTTP_TIMEOUT);
+    http.addHeader("Content-Type", "application/json");
+    int code = http.POST(payload);
+    Serial.printf("[HTTP] POST: %d\\n", code);
+    http.end();
+}
+
+void readConfig() {
+    HTTPClient http;
+    http.begin(String(SERVER_URL) + "/config/" + DEVICE_ID);
+    http.setTimeout(HTTP_TIMEOUT);
+    int code = http.GET();
+    if (code != 200) { http.end(); return; }
+
+    String body = http.getString();
+    http.end();
+
+    JsonDocument doc;
+    if (deserializeJson(doc, body)) return;
+
+    cfgLight = String(doc["light"] | "off");
+    cfgHeater = String(doc["heater"] | "off");
+    cfgDesiredTemp = doc["desired_temp"] | 28.0;
+
+    // Apply light control
+    digitalWrite(RELAY_LIGHT, cfgLight == "on" ? HIGH : LOW);
+    Serial.printf("[Config] Light: %s  Heater: %s  DesiredTemp: %.1f\\n",
+        cfgLight.c_str(), cfgHeater.c_str(), cfgDesiredTemp);
+}`,
+
+// ──────────────── SOIL SENSOR ────────────────
+soil_sensor: (d) => `// ============================================================
+// ${d.name} — Soil Sensor (7 Parameters)
+// Board: ESP32 Dev Module
+// ============================================================
+// Reads soil data via analog/I2C sensors and posts to server.
+// Adjust pin assignments and sensor libraries for your hardware.
+// ============================================================
+
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+#define WIFI_SSID       "${WIFI_SSID}"
+#define WIFI_PASSWORD   "${WIFI_PASS}"
+#define SERVER_URL      "${SERVER}"
+#define DEVICE_ID       "${d.device_id}"
+
+// Analog pins (adjust for your sensor module)
+#define PIN_MOISTURE    32
+#define PIN_PH          33
+#define PIN_TEMP        25
+
+#define SEND_INTERVAL   30000   // 30s (soil data changes slowly)
+#define HTTP_TIMEOUT    5000
+
+unsigned long lastSend = 0;
+
+void setup() {
+    Serial.begin(115200);
+    delay(1000);
+    Serial.println("\\n=== ${d.name} starting... ===");
+    connectWiFi();
+}
+
+void loop() {
+    if (WiFi.status() != WL_CONNECTED) connectWiFi();
+    unsigned long now = millis();
+    if (now - lastSend >= SEND_INTERVAL) {
+        lastSend = now;
+        sendData();
+    }
+    delay(100);
+}
+
+void connectWiFi() {
+    Serial.printf("[WiFi] Connecting to %s", WIFI_SSID);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    int tries = 0;
+    while (WiFi.status() != WL_CONNECTED && tries < 20) { delay(500); Serial.print("."); tries++; }
+    if (WiFi.status() == WL_CONNECTED) Serial.printf("\\n[WiFi] OK IP: %s\\n", WiFi.localIP().toString().c_str());
+    else Serial.println("\\n[WiFi] FAIL");
+}
+
+void sendData() {
+    // === ADJUST THESE FOR YOUR ACTUAL SENSORS ===
+    // Using analogRead and mapping as placeholders
+    float moisture = map(analogRead(PIN_MOISTURE), 0, 4095, 0, 100);
+    float ph = map(analogRead(PIN_PH), 0, 4095, 0, 14);
+    float temp = analogRead(PIN_TEMP) * 0.1; // placeholder
+
+    // If using RS485 NPK sensor, replace with Modbus reads
+    float nitrogen = random(10, 50);     // placeholder
+    float phosphorus = random(5, 30);    // placeholder
+    float potassium = random(10, 60);    // placeholder
+    float conductivity = random(1, 5);   // placeholder
+
+    Serial.printf("[Data] Moist:%.0f pH:%.1f N:%.0f P:%.0f K:%.0f T:%.1f EC:%.1f\\n",
+        moisture, ph, nitrogen, phosphorus, potassium, temp, conductivity);
+
+    JsonDocument doc;
+    doc["moisture"] = moisture;
+    doc["ph"] = ph;
+    doc["nitrogen"] = nitrogen;
+    doc["phosphorus"] = phosphorus;
+    doc["potassium"] = potassium;
+    doc["temp_c"] = temp;
+    doc["conductivity"] = conductivity;
+    String payload;
+    serializeJson(doc, payload);
+
+    HTTPClient http;
+    http.begin(String(SERVER_URL) + "/data/" + DEVICE_ID);
+    http.setTimeout(HTTP_TIMEOUT);
+    http.addHeader("Content-Type", "application/json");
+    int code = http.POST(payload);
+    Serial.printf("[HTTP] POST: %d\\n", code);
+    http.end();
+}`,
+
+// ──────────────── LDR SENSOR ────────────────
+ldr_sensor: (d) => `// ============================================================
+// ${d.name} — LDR Light Sensor
+// Board: ESP32 Dev Module
+// ============================================================
+
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+#define WIFI_SSID       "${WIFI_SSID}"
+#define WIFI_PASSWORD   "${WIFI_PASS}"
+#define SERVER_URL      "${SERVER}"
+#define DEVICE_ID       "${d.device_id}"
+
+#define LDR_PIN         32      // Analog pin
+#define SEND_INTERVAL   5000    // 5s
+#define HTTP_TIMEOUT    5000
+
+unsigned long lastSend = 0;
+
+void setup() {
+    Serial.begin(115200);
+    delay(1000);
+    Serial.println("\\n=== ${d.name} starting... ===");
+    connectWiFi();
+}
+
+void loop() {
+    if (WiFi.status() != WL_CONNECTED) connectWiFi();
+    unsigned long now = millis();
+    if (now - lastSend >= SEND_INTERVAL) {
+        lastSend = now;
+        sendData();
+    }
+    delay(100);
+}
+
+void connectWiFi() {
+    Serial.printf("[WiFi] Connecting to %s", WIFI_SSID);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    int tries = 0;
+    while (WiFi.status() != WL_CONNECTED && tries < 20) { delay(500); Serial.print("."); tries++; }
+    if (WiFi.status() == WL_CONNECTED) Serial.printf("\\n[WiFi] OK IP: %s\\n", WiFi.localIP().toString().c_str());
+    else Serial.println("\\n[WiFi] FAIL");
+}
+
+void sendData() {
+    int raw = analogRead(LDR_PIN);
+    int lightLevel = map(raw, 0, 4095, 0, 1000);
+    Serial.printf("[Data] Light: %d\\n", lightLevel);
+
+    JsonDocument doc;
+    doc["light_level"] = lightLevel;
+    String payload;
+    serializeJson(doc, payload);
+
+    HTTPClient http;
+    http.begin(String(SERVER_URL) + "/data/" + DEVICE_ID);
+    http.setTimeout(HTTP_TIMEOUT);
+    http.addHeader("Content-Type", "application/json");
+    int code = http.POST(payload);
+    Serial.printf("[HTTP] POST: %d\\n", code);
+    http.end();
+}`
+};
+
+// ================================================================
+// HELPERS
+// ================================================================
+function fmtTime(dt) {
+    if (!dt) return '—';
+    const d = new Date(dt);
+    if (isNaN(d.getTime())) return '—';
+    return String(d.getHours()).padStart(2,'0') + ':' +
+           String(d.getMinutes()).padStart(2,'0') + ':' +
+           String(d.getSeconds()).padStart(2,'0');
+}
+
+function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+}
+
+function copyCode() {
+    const code = document.getElementById('modal-code').textContent;
+    navigator.clipboard.writeText(code).then(() => alert('Copied!')).catch(() => {
+        const ta = document.createElement('textarea'); ta.value = code;
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta); alert('Copied!');
+    });
+}
+
+function downloadCode() {
+    const code = document.getElementById('modal-code').textContent;
+    const blob = new Blob([code], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (currentDevice ? currentDevice.device_id : 'device') + '.ino';
+    a.click();
+}
+
+function closeModal() { document.getElementById('code-modal').classList.remove('show'); }
+
+// ════ Auto-poll ════
+setInterval(() => { if (currentDevice) pollAll(); }, 5000);
+</script>
+</body>
+</html>

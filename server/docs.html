@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Farm — Documentation</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Courier New',monospace;background:#fff;color:#000;max-width:900px;margin:0 auto;padding:20px}
+        a{color:#000}
+        h1{font-size:18px;text-transform:uppercase;letter-spacing:2px;padding-bottom:10px;border-bottom:2px solid #000;margin-bottom:24px}
+        h2{font-size:14px;text-transform:uppercase;letter-spacing:1px;margin:28px 0 12px;padding-bottom:6px;border-bottom:1px solid #000}
+        h3{font-size:12px;text-transform:uppercase;letter-spacing:1px;margin:20px 0 8px}
+        p,li{font-size:12px;line-height:1.8}
+        ul,ol{margin-left:20px;margin-bottom:12px}
+        code{background:#f0f0f0;padding:2px 6px;font-size:11px;border:1px solid #ddd}
+        .code-block{background:#f8f8f8;border:1px solid #000;padding:12px;font-size:11px;overflow-x:auto;white-space:pre;line-height:1.6;margin:12px 0}
+        .back-link{font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px;display:inline-block}
+        table{width:100%;border-collapse:collapse;font-size:11px;margin:12px 0}
+        th,td{border:1px solid #000;padding:6px 8px;text-align:left}
+        th{font-weight:bold;text-transform:uppercase;letter-spacing:1px;font-size:10px;background:#f8f8f8}
+        .note{border:1px solid #000;padding:10px 12px;font-size:11px;margin:12px 0;background:#f8f8f8}
+        .note strong{text-transform:uppercase;letter-spacing:1px}
+        .section{border:1px solid #000;padding:16px;margin-bottom:16px}
+        .toc{margin:16px 0 30px}
+        .toc a{font-size:12px;text-decoration:none;display:block;padding:4px 0;border-bottom:1px solid #eee}
+        .toc a:hover{background:#f5f5f5;padding-left:8px}
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">← Back to Dashboard</a>
+<h1>IoT Farm Documentation</h1>
+
+<!-- Table of Contents -->
+<div class="section">
+    <h3>Table of Contents</h3>
+    <div class="toc">
+        <a href="#overview">1. System Overview</a>
+        <a href="#architecture">2. Architecture</a>
+        <a href="#quickstart">3. Quick Start Guide</a>
+        <a href="#deployment">4. Deployment (GitHub → cPanel)</a>
+        <a href="#api-reference">5. API Reference</a>
+        <a href="#device-types">6. Device Types</a>
+        <a href="#esp32-code">7. ESP32 Code Guide</a>
+        <a href="#hardware">8. Hardware Reference</a>
+        <a href="#troubleshooting">9. Troubleshooting</a>
+        <a href="#roadmap">10. Roadmap & Plans</a>
+    </div>
+</div>
+
+<!-- 1. Overview -->
+<h2 id="overview">1. System Overview</h2>
+<p>IoT Farm is a bidirectional IoT platform for monitoring sensors and controlling actuators. Built with <strong>ESP32 + vanilla PHP + MySQL</strong>.</p>
+<ul>
+    <li><strong>ESP32</strong> reads sensors, sends JSON data to server via HTTP POST</li>
+    <li><strong>PHP Server</strong> stores data in per-device MySQL tables</li>
+    <li><strong>Config-based control</strong> — ESP32 polls <code>/config/{device_id}</code> for control signals (no MQTT needed)</li>
+    <li><strong>Dashboard</strong> — AJAX-based, auto-refreshing, reactive to device type</li>
+    <li><strong>Code Generator</strong> — generates ready-to-paste Arduino IDE code per device</li>
+</ul>
+
+<!-- 2. Architecture -->
+<h2 id="architecture">2. Architecture</h2>
+<div class="code-block">┌──────────────────────┐        ┌──────────────────────────────────┐
+│  ESP32 Device        │        │  Ubuntu Server (iot.aitalim.com) │
+│  ┌───────┐ ┌──────┐  │        │  ┌────────┐  ┌───────┐           │
+│  │DHT22  │ │Relays│  │  HTTP  │  │PHP API │→ │MySQL  │           │
+│  └───┬───┘ └──┬───┘  │◄──────►│  └────────┘  └───────┘           │
+│      │        │      │        │  ┌─────────────────────┐         │
+│      └────────┘      │        │  │  AJAX Dashboard     │         │
+│      ESP32 MCU       │        │  │  (index.html)       │         │
+└──────────────────────┘        └──┴─────────────────────┴─────────┘
+
+Data Flow:
+  ESP32 ──POST /data/{id}──────→ PHP → MySQL (data_{device_id} table)
+  ESP32 ──GET  /config/{id}────→ PHP → devices.config column → JSON response
+  Dashboard ──AJAX──→ PHP API ──→ MySQL → JSON → renders cards/controls
+  Dashboard ──POST /config/{id}→ PHP → updates devices.config column</div>
+
+<h3>Key Design Decisions</h3>
+<ul>
+    <li><strong>Config-based control</strong> instead of command queues — simpler, ESP32 just polls current state, no ack needed</li>
+    <li><strong>Per-device tables</strong> — each device has its own <code>data_{device_id}</code> table, so different device types can have different JSON schemas</li>
+    <li><strong>Device types as metadata</strong> — dashboard renders dynamically from the <code>TYPES</code> JS object, making it trivial to add new types</li>
+    <li><strong>No MQTT</strong> — pure HTTP REST, works through any firewall/NAT</li>
+    <li><strong>No frameworks</strong> — vanilla PHP + vanilla JS, zero dependencies on server</li>
+</ul>
+
+<!-- 3. Quick Start -->
+<h2 id="quickstart">3. Quick Start Guide</h2>
+
+<h3>Step 1: Set Up Database</h3>
+<div class="code-block">## On your cPanel server:
+1. Login to cPanel → MySQL Database Wizard
+2. Database should already exist: aitalimc_iot
+3. User: aitalimc_admin
+4. Go to phpMyAdmin → select aitalimc_iot → Import → upload schema.sql
+5. Verify 'devices' table was created</div>
+
+<h3>Step 2: Deploy Server Code</h3>
+<div class="code-block">## Option A: Push to GitHub (auto-deploy via FTP)
+git add .
+git commit -m "initial deploy"
+git push origin main
+# GitHub Actions will FTP deploy server/ to iot.aitalim.com
+
+## Option B: Manual upload via cPanel File Manager
+1. cPanel → File Manager → navigate to home/iot.aitalim.com/
+2. Upload all files from server/ folder
+3. Ensure api/ subfolder is present</div>
+
+<h3>Step 3: Login to Dashboard</h3>
+<div class="code-block">URL:      https://iot.aitalim.com
+Username: admin
+Password: @dmin#123</div>
+
+<h3>Step 4: Add a Device</h3>
+<p>Go to <strong>Devices → + Add New</strong>. Pick a device type (e.g. "Random Test" for first test). Enter a device ID, name, location. Click <strong>Register Device</strong>.</p>
+
+<h3>Step 5: Flash ESP32</h3>
+<p>On the device card, click <strong>View Code</strong>. Copy the Arduino code. Open Arduino IDE, paste, select board "ESP32 Dev Module", upload. WiFi and server URL are pre-filled.</p>
+
+<h3>Step 6: Monitor</h3>
+<p>Go to <strong>Dashboard</strong>, select your device. Live data appears within seconds. Use controls to toggle LED/relays.</p>
+
+<!-- 4. Deployment -->
+<h2 id="deployment">4. Deployment (GitHub → cPanel via FTP)</h2>
+
+<h3>GitHub Repository Structure</h3>
+<div class="code-block">iot_test/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml          ← GitHub Actions FTP deploy
+├── esp32/
+│   └── chicken_farm_iot/       ← Arduino sketches (reference only)
+├── server/                     ← THIS gets deployed to cPanel
+│   ├── .htaccess
+│   ├── index.html              ← Dashboard
+│   ├── docs.html               ← This documentation
+│   ├── config.php              ← DB credentials
+│   ├── db.php                  ← PDO connection
+│   ├── schema.sql              ← Database schema
+│   └── api/
+│       ├── data.php            ← /data/{device_id}
+│       ├── device-config.php   ← /config/{device_id}
+│       ├── devices.php         ← /api/devices.php
+│       └── login.php           ← /api/login.php
+├── .gitignore
+└── README.md</div>
+
+<h3>GitHub Actions Setup (One-Time)</h3>
+<div class="code-block">1. Go to: https://github.com/YOUR_USER/iot_test/settings/secrets/actions
+
+2. Click "New repository secret" and add these 3 secrets:
+
+   Name: FTP_SERVER
+   Value: aitalim.com
+
+   Name: FTP_USERNAME
+   Value: admin@aitalim.com
+
+   Name: FTP_PASSWORD
+   Value: (your FTP password)
+
+3. That's it! Every push to 'main' will auto-deploy server/ to iot.aitalim.com</div>
+
+<h3>How the Workflow Works</h3>
+<div class="code-block">On push to main branch:
+  1. GitHub Actions checks out your code
+  2. Uses SamKirkland/FTP-Deploy-Action
+  3. Uploads only the server/ folder contents to your cPanel
+  4. FTP target: home/iot.aitalim.com/ (your subdomain root)
+  5. Only changed files are uploaded (delta sync)</div>
+
+<h3>After First Deploy — One-Time Steps</h3>
+<div class="code-block">1. Import schema.sql via phpMyAdmin
+2. Verify https://iot.aitalim.com loads the login page  
+3. Login and add your first test device
+4. Test with curl:
+   curl https://iot.aitalim.com/api/devices.php</div>
+
+<!-- 5. API Reference -->
+<h2 id="api-reference">5. API Reference</h2>
+
+<table>
+    <thead><tr><th>Method</th><th>URL</th><th>Auth</th><th>Purpose</th></tr></thead>
+    <tbody>
+        <tr><td>POST</td><td>/data/{device_id}</td><td>None</td><td>ESP32 sends sensor data</td></tr>
+        <tr><td>GET</td><td>/data/{device_id}?limit=N</td><td>None</td><td>Get recent readings</td></tr>
+        <tr><td>GET</td><td>/config/{device_id}</td><td>None</td><td>ESP32 reads control config</td></tr>
+        <tr><td>POST</td><td>/config/{device_id}</td><td>None</td><td>Update device config</td></tr>
+        <tr><td>GET</td><td>/api/devices.php</td><td>None</td><td>List all devices</td></tr>
+        <tr><td>GET</td><td>/api/devices.php?device_id=X</td><td>None</td><td>Get specific device</td></tr>
+        <tr><td>GET</td><td>/api/devices.php?type=X</td><td>None</td><td>Filter by type</td></tr>
+        <tr><td>POST</td><td>/api/devices.php</td><td>None</td><td>Register new device</td></tr>
+        <tr><td>POST</td><td>/api/login.php</td><td>—</td><td>Dashboard login</td></tr>
+    </tbody>
+</table>
+
+<h3>POST /data/{device_id}</h3>
+<div class="code-block">## Request:
+POST https://iot.aitalim.com/data/my_device_01
+Content-Type: application/json
+
+{"temp_c": 28.5, "humidity": 65}
+
+## Response:
+{"status": "ok", "id": 42}</div>
+
+<h3>GET /config/{device_id}</h3>
+<div class="code-block">## Request:
+GET https://iot.aitalim.com/config/my_device_01
+
+## Response:
+{"light": "on", "heater": "off", "desired_temp": 28}</div>
+
+<h3>POST /config/{device_id} (partial update)</h3>
+<div class="code-block">## Request — only send fields you want to change:
+POST https://iot.aitalim.com/config/my_device_01
+Content-Type: application/json
+
+{"light": "on"}
+
+## Response:
+{"status": "ok", "config": {"light": "on", "heater": "off", "desired_temp": 28}}</div>
+
+<h3>POST /api/devices.php</h3>
+<div class="code-block">## Request:
+POST https://iot.aitalim.com/api/devices.php
+Content-Type: application/json
+
+{
+  "device_id": "chicken_01",
+  "device_type": "chicken_coop",
+  "name": "Barn A Sensor",
+  "location": "Barn A"
+}
+
+## Response:
+{"status":"ok","device_id":"chicken_01","config":{"light":"off","heater":"off","desired_temp":28}}</div>
+
+<!-- 6. Device Types -->
+<h2 id="device-types">6. Device Types</h2>
+
+<div class="section">
+    <h3>Random Test (Demo)</h3>
+    <p>Perfect for first-time testing. No external sensors needed.</p>
+    <table>
+        <tr><th>Sensors</th><td><code>value</code> — random integer 0-1000</td></tr>
+        <tr><th>Controls</th><td><code>led</code> — built-in LED on/off (GPIO 2)</td></tr>
+        <tr><th>Config</th><td><code>{"led": "off"}</code></td></tr>
+        <tr><th>Send Interval</th><td>1 second</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h3>Chicken Coop</h3>
+    <p>Temperature & humidity monitoring with light and heater control. Heater auto-calibrates based on desired temperature.</p>
+    <table>
+        <tr><th>Sensors</th><td><code>temp_c</code> (°C), <code>humidity</code> (%)</td></tr>
+        <tr><th>Controls</th><td><code>light</code> (on/off), <code>heater</code> (on/off), <code>desired_temp</code> (15-40°C slider)</td></tr>
+        <tr><th>Config</th><td><code>{"light":"off","heater":"off","desired_temp":28}</code></td></tr>
+        <tr><th>Auto-Calibration</th><td>If temp &lt; desired_temp → heater ON. If temp ≥ desired_temp + 1 → heater OFF.</td></tr>
+        <tr><th>Hardware</th><td>DHT22 (GPIO 25), Relay Light (GPIO 13), Relay Heater (GPIO 14)</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h3>Soil Sensor</h3>
+    <p>7-parameter soil analysis for agriculture monitoring.</p>
+    <table>
+        <tr><th>Sensors</th><td><code>moisture</code>, <code>ph</code>, <code>nitrogen</code>, <code>phosphorus</code>, <code>potassium</code>, <code>temp_c</code>, <code>conductivity</code></td></tr>
+        <tr><th>Controls</th><td>None (read-only sensor)</td></tr>
+        <tr><th>Hardware</th><td>Analog moisture (GPIO 32), pH (GPIO 33), temp (GPIO 25). NPK via RS485/Modbus.</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h3>LDR Sensor</h3>
+    <p>Ambient light level monitoring.</p>
+    <table>
+        <tr><th>Sensors</th><td><code>light_level</code> (0-1000)</td></tr>
+        <tr><th>Controls</th><td>None</td></tr>
+        <tr><th>Hardware</th><td>LDR with voltage divider on GPIO 32</td></tr>
+    </table>
+</div>
+
+<h3>Adding a New Device Type</h3>
+<p>To add a custom device type, edit two places:</p>
+<div class="code-block">## 1. Dashboard (index.html) — Add to TYPES object:
+const TYPES = {
+    my_new_type: {
+        label: 'My New Sensor',
+        desc: 'Description of what it does',
+        sensors: { param1: { label: 'Param 1', unit: 'units' } },
+        controls: [{ key: 'relay', label: 'Relay', type: 'toggle' }],
+        configDefaults: { relay: 'off' }
+    }
+};
+
+## 2. Server (api/devices.php) — Add to $defaultConfigs:
+$defaultConfigs = [
+    'my_new_type' => ['relay' => 'off'],
+];
+
+## 3. Add code generator in CODE_GENERATORS object in index.html</div>
+
+<!-- 7. ESP32 Code Guide -->
+<h2 id="esp32-code">7. ESP32 Code Guide</h2>
+
+<h3>Code Structure (All Device Types Follow This Pattern)</h3>
+<div class="code-block">setup()
+  ├── Serial.begin(115200)
+  ├── Init pins (sensors, relays, LED)
+  └── connectWiFi()
+
+loop()
+  ├── Check WiFi → reconnect if needed
+  ├── Every SEND_INTERVAL:
+  │   ├── Read sensor(s)
+  │   └── HTTP POST /data/{device_id} → JSON payload
+  ├── Every CONFIG_INTERVAL:
+  │   ├── HTTP GET /config/{device_id}
+  │   └── Apply config (toggle relays, adjust setpoints)
+  └── delay(50-100ms)
+
+connectWiFi()
+  ├── WiFi.begin(SSID, PASS)
+  └── Retry up to 20 times</div>
+
+<h3>WiFi Credentials (Current Setup)</h3>
+<div class="code-block">SSID:     accounthack_fbnpa_5
+Password: CLED02502F</div>
+
+<h3>Server URL</h3>
+<div class="code-block">http://iot.aitalim.com</div>
+
+<div class="note">
+    <strong>Note for TTGO T-Call:</strong> GPIO 26, 27, 5, 23 are reserved for SIM800L modem.
+    The generated code uses safe pins: GPIO 25 (DHT), GPIO 13+14 (relays), GPIO 2 (LED).
+</div>
+
+<!-- 8. Hardware Reference -->
+<h2 id="hardware">8. Hardware Reference</h2>
+
+<h3>TTGO T-Call ESP32 SIM800L — Pin Map</h3>
+<table>
+    <thead><tr><th>GPIO</th><th>Function</th><th>Available?</th></tr></thead>
+    <tbody>
+        <tr><td>2</td><td>Built-in LED</td><td>YES</td></tr>
+        <tr><td>4</td><td>Available (LED on some boards)</td><td>YES with caution</td></tr>
+        <tr><td>5</td><td>SIM800L MODEM_POWER_ON</td><td>NO</td></tr>
+        <tr><td>13</td><td>Available</td><td>YES — Relay 1</td></tr>
+        <tr><td>14</td><td>Available</td><td>YES — Relay 2</td></tr>
+        <tr><td>15</td><td>Available</td><td>YES</td></tr>
+        <tr><td>23</td><td>SIM800L serial TX</td><td>NO</td></tr>
+        <tr><td>25</td><td>Available</td><td>YES — DHT22</td></tr>
+        <tr><td>26</td><td>SIM800L MODEM_RST</td><td>NO</td></tr>
+        <tr><td>27</td><td>SIM800L MODEM_PWRKEY</td><td>NO</td></tr>
+        <tr><td>32</td><td>Available (ADC)</td><td>YES — Analog sensors</td></tr>
+        <tr><td>33</td><td>Available (ADC)</td><td>YES — Analog sensors</td></tr>
+    </tbody>
+</table>
+
+<h3>ISR Best Practices</h3>
+<ul>
+    <li>Use <code>ARDUINO_ISR_ATTR</code> attribute on ISR functions</li>
+    <li>Mark shared variables as <code>volatile</code></li>
+    <li>Keep ISRs short — set flags only, handle in <code>loop()</code></li>
+    <li>Use <code>millis()</code> instead of <code>delay()</code> for non-blocking timing</li>
+    <li>Don't call <code>Serial.println()</code> inside ISRs</li>
+</ul>
+
+<!-- 9. Troubleshooting -->
+<h2 id="troubleshooting">9. Troubleshooting</h2>
+
+<div class="section">
+    <h3>ESP32 can't connect to WiFi</h3>
+    <ul>
+        <li>Check SSID and password are exactly correct (case-sensitive)</li>
+        <li>Make sure ESP32 is within WiFi range</li>
+        <li>Open Serial Monitor (115200 baud) to see connection attempts</li>
+        <li>Try power cycling the ESP32</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h3>ESP32 connects but server returns errors</h3>
+    <ul>
+        <li>Verify the device is registered on the dashboard first</li>
+        <li>Check the SERVER_URL in the Arduino code matches your domain</li>
+        <li>Test with curl: <code>curl https://iot.aitalim.com/api/devices.php</code></li>
+        <li>Check <code>.htaccess</code> is uploaded (needed for clean URLs)</li>
+        <li>Ensure <code>mod_rewrite</code> is enabled on Apache (cPanel has it by default)</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h3>Dashboard shows no data</h3>
+    <ul>
+        <li>Select a device from the dropdown</li>
+        <li>Check the device's data table exists in phpMyAdmin</li>
+        <li>Try sending test data: <code>curl -X POST .../data/device_id -d '{"value":42}'</code></li>
+    </ul>
+</div>
+
+<div class="section">
+    <h3>Config changes not reaching ESP32</h3>
+    <ul>
+        <li>ESP32 polls config every 3-5 seconds — wait a moment</li>
+        <li>Check Serial Monitor for <code>[Config]</code> log lines</li>
+        <li>Verify config with: <code>curl https://iot.aitalim.com/config/device_id</code></li>
+    </ul>
+</div>
+
+<div class="section">
+    <h3>GitHub Actions deploy failing</h3>
+    <ul>
+        <li>Verify all 3 secrets are set: <code>FTP_SERVER</code>, <code>FTP_USERNAME</code>, <code>FTP_PASSWORD</code></li>
+        <li>Check the FTP path in <code>deploy.yml</code> matches your subdomain directory</li>
+        <li>Go to Actions tab on GitHub to see error logs</li>
+    </ul>
+</div>
+
+<!-- 10. Roadmap -->
+<h2 id="roadmap">10. Roadmap & Plans</h2>
+
+<h3>V1 (Current)</h3>
+<ul>
+    <li>✅ Config-based bidirectional control</li>
+    <li>✅ 4 device types: Random Test, Chicken Coop, Soil Sensor, LDR</li>
+    <li>✅ Per-device data tables with JSON storage</li>
+    <li>✅ Code generator per device type</li>
+    <li>✅ Reactive dashboard per device type</li>
+    <li>✅ GitHub Actions FTP deployment</li>
+    <li>✅ Simple session auth</li>
+</ul>
+
+<h3>V2 (Planned)</h3>
+<ul>
+    <li>Data export (CSV download)</li>
+    <li>Historical charts / graphs</li>
+    <li>Email/SMS alerts (temperature thresholds)</li>
+    <li>Multi-user auth</li>
+    <li>SIM800L cellular fallback (TTGO T-Call)</li>
+    <li>OTA firmware updates</li>
+    <li>Device groups and farm management</li>
+</ul>
+
+<h3>V3 (Future)</h3>
+<ul>
+    <li>Mobile app (React Native)</li>
+    <li>Machine learning predictions</li>
+    <li>Camera integration (ESP32-CAM)</li>
+    <li>LoRa support for long-range</li>
+</ul>
+
+<footer style="border-top:1px solid #000;padding:16px 0;font-size:10px;text-align:center;color:#888;margin-top:40px">
+    IoT Farm v1 — iot.aitalim.com — Boss: Shivram Saud
+</footer>
+
+</body>
+</html>
