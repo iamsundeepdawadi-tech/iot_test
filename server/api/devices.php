@@ -69,7 +69,7 @@ if ($method === 'POST') {
     }
 
     // Check duplicate
-    $stmt = $db->prepare('SELECT id FROM devices WHERE device_id = ?');
+    $stmt = $db->prepare('SELECT device_id FROM devices WHERE device_id = ?');
     $stmt->execute([$deviceId]);
     if ($stmt->fetch()) {
         jsonError('Device ID already exists: ' . $deviceId);

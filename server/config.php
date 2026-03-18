@@ -8,11 +8,20 @@ define('DB_NAME', 'aitalimc_iot');
 define('DB_USER', 'aitalimc_admin');
 define('DB_PASS', '@dmin#123');
 
-// Dashboard auth
-define('ADMIN_USER', 'admin');
-define('ADMIN_PASS', '@dmin#123');
+// Global error handler for API
+set_exception_handler(function($e) {
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(500);
+    $msg = $e->getMessage();
+    // Catch common "table not found" error to help user debug
+    if ($e instanceof PDOException && strpos($msg, 'Base table or view not found') !== false) {
+        $msg .= " — CRITICAL FIX: The database tables do not exist! You MUST import 'server/schema.sql' into your 'aitalimc_iot' database via phpMyAdmin.";
+    }
+    echo json_encode(['status' => 'error', 'error' => $msg], JSON_UNESCAPED_UNICODE);
+    exit;
+});
 
-// CORS + JSON headers
+// Configure CORS
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');

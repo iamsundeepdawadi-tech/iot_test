@@ -15,6 +15,21 @@ function getDB() {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES   => false,
             ]);
+
+            // Auto-initialize the schema if it doesn't exist
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS devices (
+                    device_id VARCHAR(64) PRIMARY KEY,
+                    device_type VARCHAR(64) NOT NULL,
+                    name VARCHAR(128) NOT NULL,
+                    location VARCHAR(128),
+                    config JSON DEFAULT ('{}'),
+                    last_seen DATETIME NULL,
+                    ip_address VARCHAR(45) NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+
         } catch (PDOException $e) {
             jsonError('Database connection failed: ' . $e->getMessage(), 500);
         }

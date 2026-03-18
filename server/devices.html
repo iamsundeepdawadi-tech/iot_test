@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Farm — Devices</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav>
+    <a href="/" class="brand" style="text-decoration:none;">IoT Farm</a>
+    <div class="nav-links">
+        <a href="/">Dashboard</a>
+        <a href="/devices.html" class="active">Devices</a>
+        <a href="/docs.html">Docs</a>
+    </div>
+</nav>
+
+<div class="page active" id="page-app">
+    <div class="section-page active" id="sec-devices">
+    <div class="container">
+        <h1>Devices</h1>
+        <div class="tabs">
+            <button class="tab active" data-tab="t-list" onclick="switchTab(this,'t-list')">My Devices</button>
+            <button class="tab" data-tab="t-add" onclick="switchTab(this,'t-add')">+ Add New</button>
+        </div>
+
+        <div class="tab-panel active" id="t-list">
+            <div id="devices-container"><p style="font-size:12px;color:#888">Loading...</p></div>
+        </div>
+
+        <div class="tab-panel" id="t-add">
+            <div class="section">
+                <div class="section-title">Register New Device</div>
+
+                <label>Device Type</label>
+                <select id="f-type" onchange="onTypeChange()">
+                    <option value="random_test">Random Test (Demo)</option>
+                    <option value="chicken_coop">Chicken Coop</option>
+                    <option value="soil_sensor">Soil Sensor</option>
+                    <option value="ldr_sensor">LDR Sensor</option>
+                </select>
+
+                <label>Device ID</label>
+                <input type="text" id="f-id" placeholder="e.g. my_device_01" />
+
+                <label>Device Name</label>
+                <input type="text" id="f-name" placeholder="e.g. Barn A Sensor" />
+
+                <label>Location</label>
+                <input type="text" id="f-location" placeholder="e.g. Barn A" />
+
+                <div class="note" id="type-desc"></div>
+
+                <div class="error-msg" id="add-error"></div>
+                <div style="margin-top:16px">
+                    <button onclick="addDevice()">Register Device</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+<!-- CODE MODAL -->
+<div class="modal-bg" id="code-modal">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <div class="modal-title" id="modal-title">Arduino Code</div>
+        <div class="note"><strong>Instructions:</strong> Copy → Arduino IDE → Paste → Select board → Upload</div>
+        <div class="code-block" id="modal-code" style="max-height:500px"></div>
+        <div class="code-actions">
+            <button onclick="copyCode()">Copy Code</button>
+            <button onclick="downloadCode()">Download .ino</button>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<footer>IoT Farm — iot.aitalim.com</footer>
+
+<script type="module" src="/js/devices.js"></script>
+</body>
+</html>

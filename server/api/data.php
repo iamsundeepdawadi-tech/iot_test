@@ -24,7 +24,7 @@ if ($method === 'POST') {
     }
 
     // Verify device exists
-    $stmt = $db->prepare('SELECT id FROM devices WHERE device_id = ?');
+    $stmt = $db->prepare('SELECT device_id FROM devices WHERE device_id = ?');
     $stmt->execute([$deviceId]);
     if (!$stmt->fetch()) {
         jsonError('Device not registered: ' . $deviceId, 404);

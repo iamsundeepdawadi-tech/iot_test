@@ -1,0 +1,101 @@
+*{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Courier New',monospace;background:#fff;color:#000}
+        a{color:#000}
+
+        /* Nav */
+        nav{border-bottom:2px solid #000;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+        .brand{font-size:14px;font-weight:bold;text-transform:uppercase;letter-spacing:2px;text-decoration:none;cursor:pointer}
+        .nav-links{display:flex;gap:20px}
+        .nav-links a{font-size:11px;text-transform:uppercase;letter-spacing:1px;text-decoration:none;padding:4px 0;border-bottom:1px solid transparent;cursor:pointer}
+        .nav-links a:hover,.nav-links a.active{border-bottom:1px solid #000}
+
+        /* Layout */
+        .container{max-width:900px;margin:0 auto;padding:20px}
+        h1{font-size:16px;text-transform:uppercase;letter-spacing:2px;padding-bottom:8px;border-bottom:2px solid #000;margin-bottom:20px}
+
+        /* Section */
+        .section{border:1px solid #000;padding:16px;margin-bottom:16px}
+        .section-title{font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+
+        /* Forms */
+        label{font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;margin-top:12px}
+        label:first-child{margin-top:0}
+        input,select,textarea{width:100%;padding:8px;border:1px solid #000;font-family:'Courier New',monospace;font-size:12px;background:#fff}
+        input:focus,select:focus{outline:2px solid #000;outline-offset:-2px}
+
+        /* Buttons */
+        button,.btn{padding:8px 16px;border:1px solid #000;background:#fff;color:#000;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+        button:hover,.btn:hover{background:#000;color:#fff}
+        button.active{background:#000;color:#fff}
+        button:disabled{opacity:.3;cursor:not-allowed}
+        .btn-group{display:flex;gap:8px}
+        .btn-group button{flex:1}
+
+        /* Status */
+        .status-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #eee}
+        .status-row:last-child{border-bottom:none}
+        .status-label{font-weight:bold}
+        .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+        .dot.on{background:#000}.dot.off{background:#ccc}
+
+        /* Reading cards */
+        .reading-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+        .reading-box{border:1px solid #000;padding:16px;text-align:center}
+        .reading-value{font-size:32px;font-weight:bold;line-height:1}
+        .reading-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-top:6px}
+        .reading-unit{font-size:12px;font-weight:normal}
+
+        /* Control */
+        .control-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .control-box{border:1px solid #000;padding:12px}
+        .control-name{font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+        .control-status{font-size:12px;margin-bottom:10px}
+
+        /* Table */
+        table{width:100%;border-collapse:collapse;font-size:11px}
+        th,td{border:1px solid #000;padding:6px 8px;text-align:left}
+        th{font-weight:bold;text-transform:uppercase;letter-spacing:1px;font-size:10px;background:#f8f8f8}
+
+        /* Device cards */
+        .device-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+        .device-card{border:1px solid #000;padding:16px;cursor:pointer}
+        .device-card:hover{background:#f5f5f5}
+        .device-card .d-name{font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:1px}
+        .device-card .d-meta{font-size:10px;margin-top:4px;color:#555}
+        .device-card .d-type{font-size:10px;margin-top:4px;border:1px solid #000;display:inline-block;padding:2px 6px}
+
+        /* Code */
+        .code-block{background:#f8f8f8;border:1px solid #000;padding:12px;font-size:11px;overflow-x:auto;white-space:pre;max-height:400px;overflow-y:auto;line-height:1.5}
+        .code-actions{display:flex;gap:8px;margin-top:8px}
+
+        /* Tabs */
+        .tabs{display:flex;border-bottom:1px solid #000;margin-bottom:16px;flex-wrap:wrap}
+        .tab{padding:8px 16px;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;cursor:pointer;border:1px solid transparent;border-bottom:none;margin-bottom:-1px;font-family:'Courier New',monospace;background:none}
+        .tab.active{border:1px solid #000;border-bottom:1px solid #fff;background:#fff}
+        .tab-panel{display:none}.tab-panel.active{display:block}
+
+        /* Modal */
+        .modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100}
+        .modal-bg.show{display:flex;align-items:center;justify-content:center}
+        .modal{background:#fff;border:2px solid #000;padding:24px;max-width:750px;width:90%;max-height:85vh;overflow-y:auto}
+        .modal-title{font-size:14px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #000}
+        .modal-close{float:right;cursor:pointer;font-size:18px;font-weight:bold;border:none;background:none;font-family:'Courier New',monospace}
+
+        /* Note */
+        .note{border:1px solid #000;padding:10px 12px;font-size:11px;margin:12px 0;background:#f8f8f8}
+        .note strong{text-transform:uppercase;letter-spacing:1px}
+
+        /* Pages */
+        .page{display:none}.page.active{display:block}
+
+        /* Error */
+        .error-msg{font-size:11px;color:#900;padding:8px;border:1px solid #900;margin-top:8px;display:none}
+
+        /* Slider */
+        input[type=range]{-webkit-appearance:none;height:4px;background:#000;border:none;padding:0}
+        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:#000;border-radius:50%;cursor:pointer}
+
+        /* Refresh note */
+        .refresh-note{font-size:10px;color:#888;text-align:right;margin-top:4px}
+
+        footer{border-top:1px solid #000;padding:12px 20px;font-size:10px;text-align:center;color:#888;margin-top:40px}

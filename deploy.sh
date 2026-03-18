@@ -1,106 +1,79 @@
-#!/usr/bin/expect -f
+#!/bin/bash
 # ============================================================
-# IoT Farm — Deploy server/ to iot.aitalim.com via SFTP
+# IoT Farm — Deploy server/ to iot.aitalim.com via FTPS
 # ============================================================
 # Usage: ./deploy.sh
-# Requires: macOS Terminal (expect and sftp are built-in)
+# Requires: curl (built-in on macOS)
 # ============================================================
 
-set timeout -1
-
 # --- Configuration ---
-set REMOTE_USER "admin@iot.aitalim.com"
-set REMOTE_HOST "iot.aitalim.com"
-set REMOTE_PASS "@dmin#123"
-set REMOTE_DIR "/home/iot.aitalim.com"
-set LOCAL_DIR "server"
+FTP_USER="admin@iot.aitalim.com"
+FTP_PASS="@dmin#123"
+FTP_HOST="ftp.aitalim.com"
+LOCAL_DIR="server"
 
-puts "============================================"
-puts "  IoT Farm — macOS SFTP Auto-Deploy"
-puts "  Target: $REMOTE_USER@$REMOTE_HOST"
-puts "  Remote: $REMOTE_DIR"
-puts "============================================"
-puts ""
+echo "============================================"
+echo "  IoT Farm — macOS FTPS Auto-Deploy"
+echo "  Target: ftp://$FTP_HOST/"
+echo "============================================"
+echo ""
 
-# Ensure we're in the right directory before launching SFTP
-if { [file isdirectory $LOCAL_DIR] == 0 } {
-    puts "ERROR: server/ directory not found in current path!"
-    puts "Run this script from the iot_test root directory."
+if [ ! -d "$LOCAL_DIR" ]; then
+    echo "ERROR: server/ directory not found in current path!"
     exit 1
-}
+fi
 
-# Spawn the SFTP interactive session
-spawn sftp -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST
+# List of files to upload
+FILES=(
+    ".htaccess"
+    "css/style.css"
+    "js/core.js"
+    "js/dashboard.js"
+    "js/devices.js"
+    "js/types/chicken_coop.js"
+    "js/types/random_test.js"
+    "js/types/soil_sensor.js"
+    "js/types/ldr_sensor.js"
+    "index.html"
+    "devices.html"
+    "docs.html"
+    "config.php"
+    "db.php"
+    "schema.sql"
+    "api/data.php"
+    "api/device-config.php"
+    "api/devices.php"
+    "esp32/chicken_farm_iot/chicken_farm_iot.ino"
+    "esp32/chicken_farm_iot/config.h"
+)
 
-# Handle password prompt
-expect {
-    "password:" {
-        send "$REMOTE_PASS\r"
-    }
-    "yes/no" {
-        send "yes\r"
-        exp_continue
-    }
-    timeout {
-        puts "\nConnection timed out."
+# Upload each file via curl FTPS
+for FILE in "${FILES[@]}"; do
+    echo "Uploading: $FILE"
+    
+    # --disable-epsv: Use standard passive mode (fixes some cPanel data connection hangs)
+    # --ftp-create-dirs: Auto-create 'api' folder if missing
+    curl -s --disable-epsv --ftp-create-dirs -T "$LOCAL_DIR/$FILE" "ftp://$FTP_HOST/$FILE" --user "$FTP_USER:$FTP_PASS"
+    
+    if [ $? -eq 0 ]; then
+        echo "  [OK] $FILE uploaded"
+    else
+        echo "  [FAIL] Failed to upload $FILE"
         exit 1
-    }
-}
+    fi
+done
 
-# Wait for the SFTP prompt
-expect "sftp>"
-
-# Run the upload commands
-send "cd $REMOTE_DIR\r"
-expect "sftp>"
-
-send "mkdir api\r"
-expect "sftp>"
-
-send "put $LOCAL_DIR/.htaccess .htaccess\r"
-expect "sftp>"
-
-send "put $LOCAL_DIR/index.html index.html\r"
-expect "sftp>"
-
-send "put $LOCAL_DIR/docs.html docs.html\r"
-expect "sftp>"
-
-send "put $LOCAL_DIR/config.php config.php\r"
-expect "sftp>"
-
-send "put $LOCAL_DIR/db.php db.php\r"
-expect "sftp>"
-
-send "put $LOCAL_DIR/schema.sql schema.sql\r"
-expect "sftp>"
-
-send "cd api\r"
-expect "sftp>"
-
-send "put $LOCAL_DIR/api/data.php data.php\r"
-expect "sftp>"
-
-send "put $LOCAL_DIR/api/device-config.php device-config.php\r"
-expect "sftp>"
-
-send "put $LOCAL_DIR/api/devices.php devices.php\r"
-expect "sftp>"
-
-send "put $LOCAL_DIR/api/login.php login.php\r"
-expect "sftp>"
-
-send "bye\r"
-
-puts "\n\n============================================"
-puts "  DEPLOY SUCCESS!"
-puts "============================================"
-puts "\n  Dashboard: https://iot.aitalim.com"
-puts "  Docs:      https://iot.aitalim.com/docs.html"
-puts "  API:       https://iot.aitalim.com/api/devices.php\n"
-puts "  Next steps:"
-puts "  1. Import schema.sql via phpMyAdmin"
-puts "  2. Login: admin / @dmin#123"
-puts "  3. Add a device and flash ESP32\n"
-
+echo ""
+echo "============================================"
+echo "  DEPLOY SUCCESS!"
+echo "============================================"
+echo ""
+echo "  Dashboard: https://iot.aitalim.com"
+echo "  Docs:      https://iot.aitalim.com/docs.html"
+echo "  API:       https://iot.aitalim.com/api/devices.php"
+echo ""
+echo "  Next steps:"
+echo "  1. Open dashboard to view real-time data"
+echo "  2. Add a device and flash ESP32"
+echo ""
 exit 0

@@ -1,6 +1,12 @@
 RewriteEngine On
 RewriteBase /
 
+# Clean URLs for Dashboard and Pages
+RewriteRule ^dashboard/([a-zA-Z0-9_]+)/?$ index.html?device_id=$1 [L,QSA]
+RewriteRule ^dashboard/?$ index.html [L,QSA]
+RewriteRule ^devices/?$ devices.html [L,QSA]
+RewriteRule ^docs/?$ docs.html [L,QSA]
+
 # Clean URLs for ESP32 endpoints
 RewriteRule ^data/([a-zA-Z0-9_]+)/?$ api/data.php?device_id=$1 [L,QSA]
 RewriteRule ^config/([a-zA-Z0-9_]+)/?$ api/device-config.php?device_id=$1 [L,QSA]

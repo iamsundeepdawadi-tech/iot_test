@@ -4,19 +4,17 @@
 -- Database: aitalimc_iot
 -- Run: mysql -u aitalimc_admin -p aitalimc_iot < schema.sql
 -- Or import via phpMyAdmin on cPanel
+-- NOTE: db.php auto-creates this table on first run.
+--       This file exists as a reference / manual fallback.
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS devices (
-    id          INT AUTO_INCREMENT PRIMARY KEY,
-    device_id   VARCHAR(50) NOT NULL UNIQUE,
-    device_type VARCHAR(50) NOT NULL,
-    name        VARCHAR(100) NOT NULL,
-    location    VARCHAR(100) DEFAULT '',
-    config      JSON DEFAULT NULL,
-    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_seen   DATETIME DEFAULT NULL,
-    ip_address  VARCHAR(45) DEFAULT '',
-
-    INDEX idx_type (device_type),
-    INDEX idx_device (device_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    device_id   VARCHAR(64) PRIMARY KEY,
+    device_type VARCHAR(64) NOT NULL,
+    name        VARCHAR(128) NOT NULL,
+    location    VARCHAR(128),
+    config      JSON DEFAULT ('{}'),
+    last_seen   DATETIME NULL,
+    ip_address  VARCHAR(45) NULL,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

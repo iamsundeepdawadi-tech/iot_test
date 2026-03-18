@@ -1,6 +1,6 @@
 # IoT Farm — iot.aitalim.com
 
-ESP32 + vanilla PHP IoT platform for monitoring sensors and controlling actuators in real-time.
+ESP32 + Vanilla PHP IoT platform for monitoring sensors and controlling actuators in real-time.
 
 ## Architecture
 
@@ -12,37 +12,31 @@ Dashboard  ──AJAX──→  PHP API  ──→  MySQL → renders live data/
 
 ## Features
 
-- **4 device types**: Random Test, Chicken Coop, Soil Sensor, LDR  
-- **Config-based control**: ESP32 polls `/config/{id}` — no MQTT needed  
-- **Per-device tables**: Each device gets its own data table  
-- **Code generator**: Dashboard generates Arduino IDE code per device  
-- **Auto-deploy**: GitHub Actions → FTP → cPanel  
+- **4 device types**: Random Test, Chicken Coop, Soil Sensor, LDR
+- **Multipage UI**: Dashboard, Device Manager, Documentation
+- **Modular JS**: Each device type is a self-contained ES6 module
+- **Config-based control**: ESP32 polls `/config/{id}` — no MQTT needed
+- **Per-device tables**: Each device gets its own `data_{id}` table
+- **Code generator**: Dashboard generates Arduino IDE code per device
+- **Auto-deploy**: `deploy.sh` → FTP → cPanel
 
 ## Quick Start
 
 ```bash
-# 1. Clone and push to GitHub
-git clone https://github.com/YOUR_USER/iot_test.git
-cd iot_test
-git push origin main
+# 1. Deploy to server
+./deploy.sh
 
-# 2. Set GitHub Secrets (Settings → Secrets → Actions)
-FTP_SERVER   = aitalim.com
-FTP_USERNAME = admin@aitalim.com
-FTP_PASSWORD = (your FTP password)
+# 2. Test with Python emulator
+python3 server_python_test/test_device.py
 
-# 3. Import database
-# cPanel → phpMyAdmin → Import → server/schema.sql
-
-# 4. Open dashboard
+# 3. Open dashboard
 # https://iot.aitalim.com
-# Login: admin / @dmin#123
 ```
 
 ## API
 
 | Method | Endpoint | Purpose |
-|--------|----------|---------|
+|--------|----------|---------| 
 | POST | `/data/{device_id}` | ESP32 sends sensor data |
 | GET | `/data/{device_id}?limit=N` | Fetch recent data |
 | GET | `/config/{device_id}` | ESP32 reads control config |
@@ -54,22 +48,35 @@ FTP_PASSWORD = (your FTP password)
 
 ```
 server/
-├── index.html          ← Dashboard (login + device manager + controls)
-├── docs.html           ← Full documentation
-├── config.php          ← DB credentials
-├── db.php              ← PDO connection + dynamic table creation
-├── schema.sql          ← MySQL schema
-├── .htaccess           ← URL rewriting
+├── index.html              ← Dashboard (device selector + live data + controls)
+├── devices.html            ← Device Manager (register + view code)
+├── docs.html               ← Full documentation
+├── config.php              ← DB credentials + helpers
+├── db.php                  ← PDO connection + auto table creation
+├── schema.sql              ← MySQL schema reference
+├── .htaccess               ← URL rewriting (clean routes)
+├── css/style.css           ← Global stylesheet
+├── js/
+│   ├── core.js             ← Shared API/utility functions
+│   ├── dashboard.js        ← Dashboard page logic
+│   ├── devices.js          ← Device manager page logic
+│   └── types/
+│       ├── chicken_coop.js ← Chicken Coop module
+│       ├── random_test.js  ← Random Test module
+│       ├── soil_sensor.js  ← Soil Sensor module
+│       └── ldr_sensor.js   ← LDR Sensor module
 └── api/
     ├── data.php            ← /data/{device_id}
     ├── device-config.php   ← /config/{device_id}
-    ├── devices.php         ← Device CRUD
-    └── login.php           ← Session auth
+    └── devices.php         ← Device CRUD
+
+server_python_test/
+└── test_device.py          ← Python ESP32 emulator
 ```
 
 ## Hardware
 
-Default WiFi: `accounthack_fbnpa_5` / `CLED02502F`  
+Default WiFi: `accounthack_fbnpa_2` / `CLED02502F`
 Board: TTGO T-Call ESP32 SIM800L (safe pins: 2, 13, 14, 15, 25, 32, 33)
 
 ## Docs
