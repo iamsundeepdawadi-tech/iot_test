@@ -18,8 +18,17 @@ import urllib.request
 import urllib.error
 import sys
 
-# --- Configuration ---
-SERVER_URL = "http://iot.aitalim.com"
+import os
+
+config_path = os.path.join(os.path.dirname(__file__), '../server/iot_config.json')
+try:
+    with open(config_path, 'r') as f:
+        cfg = json.load(f)
+    SERVER_URL = cfg.get("SERVER_URL", "http://iot.aitalim.com")
+except Exception:
+    SERVER_URL = "http://iot.aitalim.com"
+
+# --- Device Configuration ---
 DEVICE_ID  = "python_test_01"
 DEVICE_TYPE = "chicken_coop"
 DEVICE_NAME = "Test Device"

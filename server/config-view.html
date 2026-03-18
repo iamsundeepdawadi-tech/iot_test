@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Farm — Configuration</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav>
+    <a href="/" class="brand" style="text-decoration:none;">IoT Farm</a>
+    <div class="nav-links">
+        <a href="/">Dashboard</a>
+        <a href="/devices.html">Devices</a>
+        <a href="/docs.html">Docs</a>
+        <a href="/config-view.html" class="active">Config</a>
+    </div>
+</nav>
+
+<div class="page active">
+<div class="container">
+    <h1>System Configuration</h1>
+
+    <div class="section">
+        <div class="section-title">Network</div>
+        <div class="status-row"><span class="status-label">WiFi SSID</span><span id="c-ssid">—</span></div>
+        <div class="status-row"><span class="status-label">WiFi Password</span><span id="c-pass">—</span></div>
+        <div class="status-row"><span class="status-label">Server URL</span><span id="c-server">—</span></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">API Endpoints</div>
+        <div class="status-row"><span class="status-label">List Devices</span><span>GET /api/devices.php</span></div>
+        <div class="status-row"><span class="status-label">Register Device</span><span>POST /api/devices.php</span></div>
+        <div class="status-row"><span class="status-label">Send Data</span><span>POST /data/{device_id}</span></div>
+        <div class="status-row"><span class="status-label">Read Data</span><span>GET /data/{device_id}?limit=N</span></div>
+        <div class="status-row"><span class="status-label">Read Config</span><span>GET /config/{device_id}</span></div>
+        <div class="status-row"><span class="status-label">Update Config</span><span>POST /config/{device_id}</span></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Registered Device Types</div>
+        <div id="types-list"><p style="font-size:12px;color:#888">Loading...</p></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Registered Devices</div>
+        <div id="devices-summary"><p style="font-size:12px;color:#888">Loading...</p></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Hardware Reference</div>
+        <div class="status-row"><span class="status-label">Board</span><span>TTGO T-Call ESP32 SIM800L</span></div>
+        <div class="status-row"><span class="status-label">Built-in LED</span><span>GPIO 13</span></div>
+        <div class="status-row"><span class="status-label">Safe Pins</span><span>2, 13, 14, 15, 25, 32, 33</span></div>
+        <div class="status-row"><span class="status-label">DHT22 Pin</span><span>GPIO 25</span></div>
+        <div class="status-row"><span class="status-label">Relay Light</span><span>GPIO 13</span></div>
+        <div class="status-row"><span class="status-label">Relay Heater</span><span>GPIO 14</span></div>
+    </div>
+</div>
+</div>
+
+<footer>IoT Farm — iot.aitalim.com</footer>
+
+<script type="module">
+import { WIFI_SSID, WIFI_PASS, SERVER_URL, fetchJson } from '/js/core.js';
+
+// Display constants
+document.getElementById('c-ssid').textContent = WIFI_SSID;
+document.getElementById('c-pass').textContent = WIFI_PASS;
+document.getElementById('c-server').textContent = SERVER_URL;
+
+// Load device type modules to show registered types
+const types = ['chicken_coop', 'random_test', 'soil_sensor', 'ldr_sensor'];
+let html = '<table><tr><th>Type Key</th><th>Label</th><th>Sensors</th><th>Controls</th></tr>';
+for (const t of types) {
+    try {
+        const mod = await import(`/js/types/${t}.js`);
+        const sensorCount = Object.keys(mod.sensors).length;
+        const controlCount = mod.controls.length;
+        html += `<tr><td><code>${t}</code></td><td>${mod.label}</td><td>${sensorCount}</td><td>${controlCount}</td></tr>`;
+    } catch(e) {}
+}
+html += '</table>';
+document.getElementById('types-list').innerHTML = html;
+
+// Load devices summary
+try {
+    const devices = await fetchJson('/api/devices.php');
+    if (devices.length === 0) {
+        document.getElementById('devices-summary').innerHTML = '<p style="font-size:12px;color:#888">No devices registered.</p>';
+    } else {
+        let dh = '<table><tr><th>Device ID</th><th>Type</th><th>Name</th><th>Status</th></tr>';
+        devices.forEach(d => {
+            const online = d.last_seen && (Date.now() - new Date(d.last_seen).getTime()) < 30000;
+            dh += `<tr><td><code>${d.device_id}</code></td><td>${d.device_type}</td><td>${d.name}</td><td>${online ? '● Online' : '○ Offline'}</td></tr>`;
+        });
+        dh += '</table>';
+        document.getElementById('devices-summary').innerHTML = dh;
+    }
+} catch(e) {
+    document.getElementById('devices-summary').innerHTML = '<p style="font-size:12px;color:#888">Failed to load.</p>';
+}
+</script>
+</body>
+</html>

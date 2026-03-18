@@ -1,8 +1,8 @@
 #!/bin/bash
 # ============================================================
-# IoT Farm — Deploy server/ to iot.aitalim.com via FTPS
+# IoT Farm — Deploy server/ to iot.aitalim.com via FTPS (macOS/Linux)
 # ============================================================
-# Usage: ./deploy.sh
+# Usage: ./deploy_mac.sh
 # Requires: curl (built-in on macOS)
 # ============================================================
 
@@ -10,16 +10,16 @@
 FTP_USER="admin@iot.aitalim.com"
 FTP_PASS="@dmin#123"
 FTP_HOST="ftp.aitalim.com"
-LOCAL_DIR="server"
+LOCAL_DIR="../server"
 
 echo "============================================"
-echo "  IoT Farm — macOS FTPS Auto-Deploy"
+echo "  IoT Farm — macOS/Linux FTPS Auto-Deploy"
 echo "  Target: ftp://$FTP_HOST/"
 echo "============================================"
 echo ""
 
 if [ ! -d "$LOCAL_DIR" ]; then
-    echo "ERROR: server/ directory not found in current path!"
+    echo "ERROR: ../server directory not found!"
     exit 1
 fi
 
@@ -37,6 +37,8 @@ FILES=(
     "index.html"
     "devices.html"
     "docs.html"
+    "config-view.html"
+    "iot_config.json"
     "config.php"
     "db.php"
     "schema.sql"
@@ -52,7 +54,7 @@ for FILE in "${FILES[@]}"; do
     echo "Uploading: $FILE"
     
     # --disable-epsv: Use standard passive mode (fixes some cPanel data connection hangs)
-    # --ftp-create-dirs: Auto-create 'api' folder if missing
+    # --ftp-create-dirs: Auto-create folders if missing
     curl -s --disable-epsv --ftp-create-dirs -T "$LOCAL_DIR/$FILE" "ftp://$FTP_HOST/$FILE" --user "$FTP_USER:$FTP_PASS"
     
     if [ $? -eq 0 ]; then
@@ -70,10 +72,7 @@ echo "============================================"
 echo ""
 echo "  Dashboard: https://iot.aitalim.com"
 echo "  Docs:      https://iot.aitalim.com/docs.html"
+echo "  Config:    https://iot.aitalim.com/config-view.html"
 echo "  API:       https://iot.aitalim.com/api/devices.php"
-echo ""
-echo "  Next steps:"
-echo "  1. Open dashboard to view real-time data"
-echo "  2. Add a device and flash ESP32"
 echo ""
 exit 0

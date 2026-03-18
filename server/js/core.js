@@ -51,8 +51,16 @@ export async function loadDeviceModule(type) {
 }
 
 /**
- * Global Constants
+ * Global Constants (fetched dynamically from config)
  */
-export const WIFI_SSID = 'accounthack_fbnpa_2';
-export const WIFI_PASS = 'CLED02502F';
-export const SERVER_URL = 'http://iot.aitalim.com';
+let configData = { WIFI_SSID: '', WIFI_PASS: '', SERVER_URL: '' };
+try {
+    const res = await fetch('/iot_config.json');
+    if (res.ok) configData = await res.json();
+} catch (e) {
+    console.error("Failed to load iot_config.json", e);
+}
+
+export const WIFI_SSID = configData.WIFI_SSID;
+export const WIFI_PASS = configData.WIFI_PASS;
+export const SERVER_URL = configData.SERVER_URL;

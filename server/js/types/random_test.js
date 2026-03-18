@@ -29,7 +29,7 @@ export function generateCode(d) {
 #define SERVER_URL      "${SERVER_URL}"
 #define DEVICE_ID       "${d.device_id}"
 
-#define LED_PIN         2
+#define LED_PIN         13
 
 unsigned long lastSend = 0;
 unsigned long lastConfig = 0;
